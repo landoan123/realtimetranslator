@@ -1,0 +1,1123 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Conference Voice Translator</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0d1117;
+    --surface: #161b22;
+    --surface2: #21262d;
+    --border: #30363d;
+    --accent: #58a6ff;
+    --accent2: #3fb950;
+    --red: #f85149;
+    --yellow: #d29922;
+    --text: #e6edf3;
+    --text2: #8b949e;
+    --radius: 12px;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: 'Inter', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    height: 100vh;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 16px 16px 8px;
+    gap: 12px;
+    box-sizing: border-box;
+  }
+
+  /* HEADER */
+  .header {
+    text-align: center;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+  }
+  .header h1 {
+    font-size: 1.3rem;
+    font-weight: 700;
+    background: linear-gradient(135deg, var(--accent), #79c0ff);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    letter-spacing: -0.5px;
+  }
+  .header p { color: var(--text2); font-size: 0.78rem; }
+
+  /* STATUS BAR */
+  .status-bar {
+    display: flex;
+    gap: 12px;
+    align-items: center;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 50px;
+    padding: 6px 16px;
+    font-size: 0.75rem;
+  }
+  .status-dot {
+    width: 8px; height: 8px;
+    border-radius: 50%;
+    background: var(--text2);
+    transition: background 0.3s;
+  }
+  .status-dot.online { background: var(--accent2); box-shadow: 0 0 6px var(--accent2); }
+  .status-dot.offline { background: var(--red); }
+  .status-dot.warn { background: var(--yellow); }
+  .status-label { color: var(--text2); }
+  .engine-tag {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    padding: 1px 6px;
+    font-size: 0.7rem;
+    color: var(--accent);
+    font-weight: 600;
+  }
+
+  /* CONTROLS */
+  .controls {
+    display: flex;
+    gap: 10px;
+    align-items: center;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 10px 18px;
+    flex-wrap: wrap;
+    justify-content: center;
+    width: 100%;
+    max-width: 1400px;
+    flex-shrink: 0;
+  }
+  .lang-group { display: flex; align-items: center; gap: 8px; }
+  .lang-group label { font-size: 0.8rem; color: var(--text2); font-weight: 500; }
+  select {
+    background: var(--surface2);
+    color: var(--text);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 7px 10px;
+    font-size: 0.85rem;
+    font-family: 'Inter', sans-serif;
+    cursor: pointer;
+    outline: none;
+    transition: border-color 0.2s;
+  }
+  select:focus { border-color: var(--accent); }
+
+  .swap-btn {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    color: var(--text2);
+    width: 36px; height: 36px;
+    border-radius: 50%;
+    cursor: pointer;
+    font-size: 1rem;
+    display: flex; align-items: center; justify-content: center;
+    transition: all 0.2s;
+    flex-shrink: 0;
+  }
+  .swap-btn:hover { border-color: var(--accent); color: var(--accent); transform: rotate(180deg); }
+
+  .mic-btn {
+    background: linear-gradient(135deg, var(--accent), #388bfd);
+    color: white;
+    border: none;
+    padding: 10px 24px;
+    border-radius: 50px;
+    font-size: 0.9rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s;
+    font-family: 'Inter', sans-serif;
+    display: flex; align-items: center; gap: 8px;
+    flex-shrink: 0;
+  }
+  .mic-btn:hover { transform: translateY(-1px); box-shadow: 0 4px 16px rgba(88,166,255,0.4); }
+  .mic-btn.recording {
+    background: linear-gradient(135deg, var(--red), #ff6b6b);
+    box-shadow: 0 0 0 0 rgba(248,81,73,0.6);
+    animation: pulse-btn 1.4s infinite;
+  }
+  @keyframes pulse-btn {
+    0%   { box-shadow: 0 0 0 0 rgba(248,81,73,0.6); }
+    70%  { box-shadow: 0 0 0 14px rgba(248,81,73,0); }
+    100% { box-shadow: 0 0 0 0 rgba(248,81,73,0); }
+  }
+
+  .clear-btn {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    color: var(--text2);
+    padding: 10px 16px;
+    border-radius: 50px;
+    font-size: 0.8rem;
+    cursor: pointer;
+    transition: all 0.2s;
+    font-family: 'Inter', sans-serif;
+  }
+  .clear-btn:hover { border-color: var(--red); color: var(--red); }
+
+  .tts-toggle-btn {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    color: var(--text2);
+    padding: 10px 16px;
+    border-radius: 50px;
+    font-size: 0.8rem;
+    cursor: pointer;
+    transition: all 0.2s;
+    font-family: 'Inter', sans-serif;
+    display: flex; align-items: center; gap: 6px;
+    flex-shrink: 0;
+  }
+  .tts-toggle-btn.active {
+    border-color: var(--accent2);
+    color: var(--accent2);
+    background: rgba(63,185,80,0.1);
+  }
+  .tts-toggle-btn:hover { border-color: var(--accent2); color: var(--accent2); }
+
+  .speak-btn {
+    background: none;
+    border: 1px solid var(--border);
+    color: var(--text2);
+    border-radius: 6px;
+    padding: 3px 8px;
+    font-size: 0.7rem;
+    cursor: pointer;
+    transition: all 0.2s;
+    font-family: 'Inter', sans-serif;
+  }
+  .speak-btn:hover { border-color: var(--accent); color: var(--accent); }
+  .speak-btn.speaking {
+    border-color: var(--accent2);
+    color: var(--accent2);
+    animation: pulse-speak 1s ease-in-out infinite;
+  }
+  @keyframes pulse-speak {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.5; }
+  }
+
+  .tts-indicator {
+    display: none;
+    align-items: center;
+    gap: 3px;
+    padding: 8px 16px;
+    border-top: 1px solid var(--border);
+  }
+  .tts-indicator.active { display: flex; }
+  .tts-bar {
+    width: 3px;
+    height: 16px;
+    background: var(--accent2);
+    border-radius: 2px;
+    animation: wave 0.8s ease-in-out infinite;
+  }
+  .tts-bar:nth-child(2) { animation-delay: 0.1s; }
+  .tts-bar:nth-child(3) { animation-delay: 0.2s; }
+  .tts-bar:nth-child(4) { animation-delay: 0.3s; }
+  .tts-bar:nth-child(5) { animation-delay: 0.4s; }
+  .tts-label { font-size: 0.75rem; color: var(--accent2); margin-left: 8px; }
+
+  /* PANELS */
+  .panels-container {
+    display: flex;
+    gap: 16px;
+    width: 100%;
+    max-width: 1400px;
+    flex: 1;
+    min-height: 0;
+  }
+  .panel {
+    flex: 1;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    min-height: 0;
+    overflow: hidden;
+    transition: border-color 0.3s;
+  }
+  .panel.active { border-color: var(--accent); }
+  .panel-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 12px 16px;
+    border-bottom: 1px solid var(--border);
+    background: var(--surface2);
+  }
+  .panel-title { font-size: 0.8rem; font-weight: 600; color: var(--text2); text-transform: uppercase; letter-spacing: 0.5px; }
+  .panel-lang { font-size: 0.75rem; color: var(--accent); font-weight: 500; }
+  .copy-btn {
+    background: none;
+    border: 1px solid var(--border);
+    color: var(--text2);
+    border-radius: 6px;
+    padding: 3px 8px;
+    font-size: 0.7rem;
+    cursor: pointer;
+    transition: all 0.2s;
+    font-family: 'Inter', sans-serif;
+  }
+  .copy-btn:hover { border-color: var(--accent2); color: var(--accent2); }
+
+  .panel-content {
+    flex: 1;
+    padding: 20px;
+    font-size: 1.15rem;
+    line-height: 1.8;
+    color: var(--text);
+    overflow-y: auto;
+    white-space: pre-wrap;
+    word-break: break-word;
+    min-height: 0;
+  }
+  .panel-content.empty { color: var(--text2); font-size: 0.9rem; font-style: italic; }
+  .interim { color: var(--text2); font-style: italic; }
+
+  /* WAVE INDICATOR */
+  .wave-indicator {
+    display: none;
+    align-items: center;
+    gap: 3px;
+    padding: 8px 16px;
+    border-top: 1px solid var(--border);
+  }
+  .wave-indicator.active { display: flex; }
+  .wave-bar {
+    width: 3px;
+    height: 16px;
+    background: var(--accent);
+    border-radius: 2px;
+    animation: wave 1s ease-in-out infinite;
+  }
+  .wave-bar:nth-child(2) { animation-delay: 0.1s; }
+  .wave-bar:nth-child(3) { animation-delay: 0.2s; }
+  .wave-bar:nth-child(4) { animation-delay: 0.3s; }
+  .wave-bar:nth-child(5) { animation-delay: 0.4s; }
+  @keyframes wave {
+    0%, 100% { transform: scaleY(0.4); }
+    50%       { transform: scaleY(1); }
+  }
+  .wave-label { font-size: 0.75rem; color: var(--accent); margin-left: 8px; }
+  .wave-countdown {
+    margin-left: auto;
+    font-size: 0.75rem;
+    font-weight: 700;
+    color: var(--accent);
+    min-width: 18px;
+    text-align: right;
+    transition: color 0.3s;
+  }
+  .wave-countdown.warn { color: var(--yellow); }
+  .wave-countdown.danger { color: var(--red); }
+
+  /* FOOTER */
+  .footer { font-size: 0.68rem; color: var(--text2); text-align: center; flex-shrink: 0; }
+  .footer a { color: var(--accent); text-decoration: none; }
+
+  
+  .auto-nouns-bar {
+    width: 100%; max-width: 860px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 8px 14px;
+    font-size: 0.75rem;
+    color: var(--text2);
+    display: none;
+    gap: 8px;
+    align-items: center;
+    flex-wrap: wrap;
+  }
+  .auto-nouns-bar.visible { display: flex; }
+  .auto-noun-pill {
+    background: rgba(240,165,0,0.12);
+    border: 1px solid rgba(240,165,0,0.4);
+    color: #f0a500;
+    border-radius: 50px;
+    padding: 2px 8px;
+    font-weight: 600;
+  }
+
+
+  /* MANUAL INPUT FALLBACK */
+  .manual-input-area {
+    display: none;
+    flex-direction: column;
+    gap: 8px;
+    padding: 12px 16px;
+    border-top: 1px solid var(--border);
+    background: rgba(248,81,73,0.05);
+  }
+  .manual-input-area.visible { display: flex; }
+  .manual-input-area label { font-size: 0.75rem; color: var(--red); font-weight: 500; }
+  .manual-textarea {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    color: var(--text);
+    font-family: 'Inter', sans-serif;
+    font-size: 0.95rem;
+    padding: 10px 12px;
+    resize: none;
+    height: 80px;
+    outline: none;
+    transition: border-color 0.2s;
+  }
+  .manual-textarea:focus { border-color: var(--accent); }
+  .manual-send-btn {
+    background: var(--accent);
+    color: white; border: none;
+    padding: 8px 16px; border-radius: 8px;
+    font-size: 0.85rem; font-weight: 600;
+    cursor: pointer; font-family: 'Inter', sans-serif;
+    align-self: flex-end;
+  }
+  @media (max-width: 640px) {
+    .panels-container { flex-direction: column; }
+    .controls { gap: 10px; }
+    .vocab-panel { width: 100vw; }
+  }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <h1>🎙️ Conference Voice Translator</h1>
+  <p>Nhận diện giọng nói thời gian thực · Dịch đa ngôn ngữ</p>
+</div>
+
+<!-- STATUS BAR -->
+<div class="status-bar" id="statusBar">
+  <span class="status-dot" id="serverDot"></span>
+  <span class="status-label" id="serverLabel">Đang kiểm tra server...</span>
+  <span class="engine-tag" id="engineTag">—</span>
+</div>
+
+<!-- CONTROLS -->
+<div class="controls">
+  <div class="lang-group">
+    <label for="sourceLang">Ngôn ngữ nói:</label>
+    <select id="sourceLang">
+      <option value="vi-VN">🇻🇳 Tiếng Việt</option>
+      <option value="en-US">🇺🇸 Tiếng Anh</option>
+      <option value="ja-JP">🇯🇵 Tiếng Nhật</option>
+      <option value="ko-KR">🇰🇷 Tiếng Hàn</option>
+      <option value="zh-CN">🇨🇳 Tiếng Trung</option>
+      <option value="fr-FR">🇫🇷 Tiếng Pháp</option>
+      <option value="de-DE">🇩🇪 Tiếng Đức</option>
+    </select>
+  </div>
+
+  <button class="swap-btn" id="swapBtn" title="Đổi ngôn ngữ">⇄</button>
+
+  <button id="micBtn" class="mic-btn">🎤 Bắt đầu nói</button>
+
+  <div class="lang-group">
+    <label for="targetLang">Dịch sang:</label>
+    <select id="targetLang">
+      <option value="en">🇺🇸 Tiếng Anh</option>
+      <option value="vi">🇻🇳 Tiếng Việt</option>
+      <option value="ja">🇯🇵 Tiếng Nhật</option>
+      <option value="ko">🇰🇷 Tiếng Hàn</option>
+      <option value="zh">🇨🇳 Tiếng Trung</option>
+      <option value="fr">🇫🇷 Tiếng Pháp</option>
+      <option value="de">🇩🇪 Tiếng Đức</option>
+    </select>
+  </div>
+
+  <button class="clear-btn" id="clearBtn">🗑 Xóa</button>
+  <button class="tts-toggle-btn active" id="ttsToggleBtn" title="Bật/tắt tự động đọc bản dịch">🔊 Tự đọc</button>
+</div>
+
+<!-- PANELS -->
+<div class="panels-container">
+  <!-- SOURCE PANEL -->
+  <div class="panel" id="sourcePanel">
+    <div class="panel-header">
+      <span class="panel-title">Văn bản gốc</span>
+      <span class="panel-lang" id="sourceLangLabel">Tiếng Việt</span>
+      <button class="copy-btn" onclick="copyText('sourceDisplay')">📋 Copy</button>
+    </div>
+    <div class="panel-content" id="sourceDisplay">
+      <span class="empty-hint" style="color:var(--text2);font-style:italic;font-size:0.9rem">Nhấn 🎤 và bắt đầu nói...</span>
+    </div>
+    <div class="wave-indicator" id="waveIndicator">
+      <div class="wave-bar"></div>
+      <div class="wave-bar"></div>
+      <div class="wave-bar"></div>
+      <div class="wave-bar"></div>
+      <div class="wave-bar"></div>
+      <span class="wave-label" id="waveLabel">Đang nghe...</span>
+      <span class="wave-countdown" id="waveCountdown"></span>
+    </div>
+    <!-- Manual input fallback -->
+    <div class="manual-input-area" id="manualInputArea">
+      <label>⚠️ Speech API không khả dụng — nhập văn bản thủ công:</label>
+      <textarea class="manual-textarea" id="manualInput" placeholder="Nhập văn bản ở đây rồi nhấn Dịch..."></textarea>
+      <button class="manual-send-btn" id="manualSendBtn">➤ Dịch</button>
+    </div>
+  </div>
+
+  <!-- TARGET PANEL -->
+  <div class="panel" id="targetPanel">
+    <div class="panel-header">
+      <span class="panel-title">Bản dịch</span>
+      <span class="panel-lang" id="targetLangLabel">Tiếng Anh</span>
+      <div style="display:flex;gap:6px;align-items:center">
+        <button class="speak-btn" id="speakBtn" onclick="speakTranslation()" title="Phát âm bản dịch">🔊 Phát</button>
+        <button class="copy-btn" onclick="copyText('translatedDisplay')">📋 Copy</button>
+      </div>
+    </div>
+    <div class="panel-content" id="translatedDisplay">
+      <span style="color:var(--text2);font-style:italic;font-size:0.9rem">Bản dịch sẽ xuất hiện ở đây...</span>
+    </div>
+    <div class="tts-indicator" id="ttsIndicator">
+      <div class="tts-bar"></div>
+      <div class="tts-bar"></div>
+      <div class="tts-bar"></div>
+      <div class="tts-bar"></div>
+      <div class="tts-bar"></div>
+      <span class="tts-label">Đang phát âm...</span>
+    </div>
+  </div>
+</div>
+
+<div class="auto-nouns-bar" id="autoNounsBar">
+  <span>&#128270; Tên riêng tự phát hiện:</span>
+  <span id="autoNounPills"></span>
+</div>
+
+<div class="footer">
+  Mở từ <strong>http://localhost:5000</strong> để dùng đầy đủ tính năng ·
+  Speech API yêu cầu Chrome/Edge
+</div>
+
+<script>
+// ─── CONFIG ─────────────────────────────────────────────────
+const LOCAL_SERVER = 'http://localhost:5000';
+const LANG_NAMES = {
+  'vi-VN':'Tiếng Việt','vi':'Tiếng Việt',
+  'en-US':'Tiếng Anh','en':'Tiếng Anh',
+  'ja-JP':'Tiếng Nhật','ja':'Tiếng Nhật',
+  'ko-KR':'Tiếng Hàn','ko':'Tiếng Hàn',
+  'zh-CN':'Tiếng Trung','zh':'Tiếng Trung',
+  'fr-FR':'Tiếng Pháp','fr':'Tiếng Pháp',
+  'de-DE':'Tiếng Đức','de':'Tiếng Đức',
+};
+
+// ─── ELEMENTS ───────────────────────────────────────────────
+const micBtn          = document.getElementById('micBtn');
+const clearBtn        = document.getElementById('clearBtn');
+const swapBtn         = document.getElementById('swapBtn');
+const sourceLangSel   = document.getElementById('sourceLang');
+const targetLangSel   = document.getElementById('targetLang');
+const sourceDisplay   = document.getElementById('sourceDisplay');
+const translatedDisplay = document.getElementById('translatedDisplay');
+const waveIndicator   = document.getElementById('waveIndicator');
+const sourcePanel     = document.getElementById('sourcePanel');
+const serverDot       = document.getElementById('serverDot');
+const serverLabel     = document.getElementById('serverLabel');
+const engineTag       = document.getElementById('engineTag');
+const sourceLangLabel = document.getElementById('sourceLangLabel');
+const targetLangLabel = document.getElementById('targetLangLabel');
+
+// ─── STATE ──────────────────────────────────────────────────
+let isRecording      = false;
+let sessionBase      = '';
+let accumulatedFinal = '';
+let translateTimer   = null;
+let serverOnline     = false;
+let lastEngine       = '—';
+let autoTTS          = true;   // tự động đọc bản dịch
+let silenceTimer     = null;   // countdown auto-stop
+let countdownInterval= null;   // interval hiển thị đếm ngược
+
+const SILENCE_SECONDS = 3;     // số giây im lặng trước khi tự ngừng
+const waveLabel     = document.getElementById('waveLabel');
+const waveCountdown = document.getElementById('waveCountdown');
+
+// ─── SERVER CHECK ────────────────────────────────────────────
+async function checkServer() {
+  // Neu dang mo tu file:// thi khong the ket noi server (CORS)
+  if (location.protocol === 'file:') {
+    serverOnline = false;
+    serverDot.className = 'status-dot offline';
+    serverLabel.innerHTML = '⚠️ Mở từ file:// — <a href="http://localhost:5000" style="color:var(--accent)">Click để mở đúng</a>';
+    engineTag.textContent = 'ONLINE ONLY';
+    return;
+  }
+  // Dung AbortController thay vi AbortSignal.timeout() (Edge compat)
+  const ctrl = new AbortController();
+  const timer = setTimeout(() => ctrl.abort(), 3000);
+  try {
+    const r = await fetch(`${LOCAL_SERVER}/health`, {
+      signal: ctrl.signal,
+      mode: 'cors',
+      cache: 'no-store'
+    });
+    clearTimeout(timer);
+    if (r.ok) {
+      serverOnline = true;
+      serverDot.className = 'status-dot online';
+      serverLabel.textContent = 'Local server · sẵn sàng';
+      engineTag.textContent = 'LOCAL + ONLINE';
+      return;
+    }
+  } catch(e) {
+    clearTimeout(timer);
+  }
+  serverOnline = false;
+  serverDot.className = 'status-dot warn';
+  serverLabel.textContent = 'Chỉ dùng MyMemory API';
+  engineTag.textContent = 'ONLINE ONLY';
+}
+checkServer();
+setInterval(checkServer, 15000);
+
+// ─── LANG LABELS ────────────────────────────────────────────
+function updateLangLabels() {
+  sourceLangLabel.textContent = LANG_NAMES[sourceLangSel.value] || sourceLangSel.value;
+  targetLangLabel.textContent = LANG_NAMES[targetLangSel.value] || targetLangSel.value;
+}
+sourceLangSel.addEventListener('change', updateLangLabels);
+targetLangSel.addEventListener('change', updateLangLabels);
+updateLangLabels();
+
+// ─── SWAP BUTTON ────────────────────────────────────────────
+swapBtn.addEventListener('click', () => {
+  const srcCode = sourceLangSel.value.split('-')[0];
+  const tgtCode = targetLangSel.value;
+  // Tìm option source có tgt code
+  const srcOpt = [...sourceLangSel.options].find(o => o.value.startsWith(tgtCode));
+  const tgtOpt = [...targetLangSel.options].find(o => o.value === srcCode);
+  if (srcOpt) sourceLangSel.value = srcOpt.value;
+  if (tgtOpt) targetLangSel.value = tgtOpt.value;
+  updateLangLabels();
+});
+
+// ─── SPEECH RECOGNITION ─────────────────────────────────────
+const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+if (!SpeechRecognition) {
+  serverLabel.textContent = '❌ Trình duyệt không hỗ trợ — dùng Chrome/Edge';
+  serverDot.className = 'status-dot offline';
+  micBtn.disabled = true;
+  setTimeout(showManualFallback, 100);
+}
+
+let recognition;
+if (SpeechRecognition) {
+  recognition = new SpeechRecognition();
+  recognition.continuous = true;
+  recognition.interimResults = true;
+  recognition.maxAlternatives = 1;
+}
+
+micBtn.addEventListener('click', () => {
+  if (isRecording) stopRecording();
+  else startRecording();
+});
+
+clearBtn.addEventListener('click', () => {
+  sessionBase = '';
+  accumulatedFinal = '';
+  clearTimeout(translateTimer);
+  sourceDisplay.innerHTML = '<span style="color:var(--text2);font-style:italic;font-size:0.9rem">Nhấn 🎤 và bắt đầu nói...</span>';
+  translatedDisplay.innerHTML = '<span style="color:var(--text2);font-style:italic;font-size:0.9rem">Bản dịch sẽ xuất hiện ở đây...</span>';
+  sourcePanel.classList.remove('active');
+});
+
+function startRecording() {
+  if (!recognition) return;
+  sessionBase      = '';
+  accumulatedFinal = '';
+  sourceDisplay.innerHTML = '';
+  translatedDisplay.innerHTML = '<span style="color:var(--text2);font-size:0.9rem">⏳ Đang chờ...</span>';
+  recognition.lang = sourceLangSel.value;
+  try { recognition.start(); } catch(e) { console.warn(e); }
+}
+
+const TRANSLATE_DELAY = 2000; // 2s im lang thi dich
+
+// ─── SILENCE COUNTDOWN ───────────────────────────────────────
+function clearSilenceCountdown() {
+  clearTimeout(silenceTimer);
+  clearInterval(countdownInterval);
+  silenceTimer = null;
+  countdownInterval = null;
+  if (waveCountdown) { waveCountdown.textContent = ''; waveCountdown.className = 'wave-countdown'; }
+  if (waveLabel) waveLabel.textContent = 'Đang nghe...';
+}
+
+function startSilenceCountdown() {
+  clearSilenceCountdown();
+  if (!isRecording) return;
+
+  let remaining = SILENCE_SECONDS;
+  // Cập nhật ngay lập tức
+  updateCountdownUI(remaining);
+
+  countdownInterval = setInterval(() => {
+    remaining--;
+    if (remaining <= 0) {
+      clearSilenceCountdown();
+      stopRecording();
+    } else {
+      updateCountdownUI(remaining);
+    }
+  }, 1000);
+}
+
+function updateCountdownUI(n) {
+  if (!waveCountdown) return;
+  waveCountdown.textContent = n + 's';
+  waveCountdown.className = 'wave-countdown' + (n === 1 ? ' danger' : n === 2 ? ' warn' : '');
+  if (waveLabel) waveLabel.textContent = 'Im lặng...';
+}
+
+function stopRecording() {
+  clearSilenceCountdown();
+  isRecording = false;
+  if (recognition) recognition.stop();
+  micBtn.textContent = '🎤 Bắt đầu nói';
+  micBtn.classList.remove('recording');
+  waveIndicator.classList.remove('active');
+  sourcePanel.classList.remove('active');
+  clearTimeout(translateTimer);
+  const text = accumulatedFinal.trim();
+  if (text) translateText(text);
+}
+
+recognition && (recognition.onstart = () => {
+  isRecording = true;
+  micBtn.classList.add('recording');
+  micBtn.textContent = '🛑 Dừng lại';
+  waveIndicator.classList.add('active');
+  sourcePanel.classList.add('active');
+});
+
+recognition && (recognition.onresult = (event) => {
+  // Build lai tu dau de tranh trung lap khi resultIndex bi lech
+  let sessionFinal = '';
+  let interim      = '';
+
+  for (let i = 0; i < event.results.length; i++) {
+    if (event.results[i].isFinal) {
+      sessionFinal += event.results[i][0].transcript;
+    } else {
+      interim += event.results[i][0].transcript;
+    }
+  }
+
+  // accumulatedFinal = phan da luu tu session truoc + final session nay
+  accumulatedFinal = (sessionBase + ' ' + sessionFinal).trim();
+
+  // Hien thi nguon
+  sourceDisplay.textContent = accumulatedFinal + (interim ? ' ' + interim : '');
+
+  // Mỗi khi có speech → reset countdown
+  if (interim) {
+    clearSilenceCountdown();
+  }
+
+  // Debounce dich: sau TRANSLATE_DELAY ms khong noi them thi dich
+  clearTimeout(translateTimer);
+  const textToTranslate = accumulatedFinal + (interim ? ' ' + interim : '');
+  if (textToTranslate.trim()) {
+    translateTimer = setTimeout(() => {
+      translateText(textToTranslate.trim());
+    }, interim ? TRANSLATE_DELAY : 400);
+  }
+
+  // Khi câu cuối đã final (không còn interim) → bắt đầu đếm ngược
+  if (!interim && accumulatedFinal.trim()) {
+    startSilenceCountdown();
+  }
+});
+
+recognition && (recognition.onerror = (event) => {
+  console.error('Speech error:', event.error);
+  if (event.error === 'aborted') return;
+
+  if (event.error === 'network') {
+    // Khi mở từ file:// → báo dùng localhost
+    serverDot.className = 'status-dot offline';
+    serverLabel.textContent = '⚠️ Lỗi mạng Speech API — Mở từ http://localhost:5000';
+    if (isRecording) { isRecording = false; micBtn.classList.remove('recording'); micBtn.textContent = '🎤 Bắt đầu nói'; waveIndicator.classList.remove('active'); }
+    return;
+  }
+  if (event.error === 'not-allowed') {
+    sourceDisplay.innerHTML = '<span style="color:var(--red)">⛔ Chưa cấp quyền microphone. Nhấn vào biểu tượng 🔒 trên thanh địa chỉ để cấp phép.</span>';
+    isRecording = false; micBtn.classList.remove('recording'); micBtn.textContent = '🎤 Bắt đầu nói'; waveIndicator.classList.remove('active');
+    return;
+  }
+  if (event.error === 'no-speech' && isRecording) {
+    // Tiếp tục — tự restart
+    return;
+  }
+  if (event.error === 'audio-capture') {
+    sourceDisplay.innerHTML = '<span style="color:var(--red)">🎙️ Không tìm thấy microphone.</span>';
+    isRecording = false; micBtn.classList.remove('recording'); micBtn.textContent = '🎤 Bắt đầu nói'; waveIndicator.classList.remove('active');
+  }
+});
+
+recognition && (recognition.onend = () => {
+  if (isRecording) {
+    // Luu text truoc khi restart de khong bi mat
+    if (accumulatedFinal.trim()) {
+      sessionBase = accumulatedFinal.trim();
+    }
+    setTimeout(() => {
+      try { recognition.lang = sourceLangSel.value; recognition.start(); } catch(e) {}
+    }, 150);
+  } else {
+    waveIndicator.classList.remove('active');
+  }
+});
+
+
+// ─── VIET NAME PREPROCESSING ─────────────────────────────────
+const VIET_SURNAMES_JS = new Set([
+  'nguyen','tran','le','pham','hoang','huynh','phan','vu','vo',
+  'dang','bui','do','ho','ngo','duong','ly','dinh','truong',
+  'doan','vuong','lam','luu','dao','mai','to','thai',
+  'quach','chu','lieu','trinh','ta','tong','cao','dam','tang',
+  'nghiem','than','tieu','mac','luong','kieu','van',
+  // co dau
+  'nguy\u1ec5n','tr\u1ea7n','l\u00ea','ph\u1ea1m','ho\u00e0ng','hu\u1ef3nh',
+  'v\u0169','v\u00f5','\u0111\u1eb7ng','b\u00f9i','\u0111\u1ed7','h\u1ed3','ng\u00f4',
+  'd\u01b0\u01a1ng','l\u00fd','\u0111inh','tr\u01b0\u01a1ng','\u0111o\u00e0n',
+  'v\u01b0\u01a1ng','l\u00e2m','l\u01b0u','\u0111\u00e0o','t\u00f4','h\u00e0',
+  'th\u00e1i','qu\u00e1ch','li\u00eau','tr\u1ecbnh','t\u1ea1','t\u1ed1ng',
+  '\u0111\u00e0m','t\u0103ng','nghi\u00eam','th\u00e2n',
+]);
+
+const VIET_STOPWORDS_JS = new Set([
+  'l\u00e0','v\u00e0','c\u1ee7a','cho','v\u1edbi','t\u1eeb','\u0111\u1ebfn','t\u1ea1i','\u1edf','v\u1ec1',
+  'kh\u00f4ng','c\u00f3','\u0111\u01b0\u1ee3c','n\u00e0y','\u0111\u00f3','khi','sau','trong',
+  'ngo\u00e0i','v\u00ec','n\u00ean','nh\u01b0ng','m\u00e0','th\u00ec','b\u1edfi','do',
+  't\u00f4i','b\u1ea1n','anh','ch\u1ecb','em','\u00f4ng','b\u00e0','c\u00f4',
+  'm\u1ecdi','c\u00e1c','nh\u1eefng','m\u1ed9t','hai','ba',
+  'tr\u01b0\u1eddng','\u0111\u1ea1i','h\u1ecdc','th\u00e0nh','ph\u1ed1',
+  'x\u00e3','nh\u00e2n','v\u0103n','khoa','t\u1ea5t','c\u1ea3',
+  'xin','ch\u00e0o','n\u0103m','ng\u00e0y','th\u00e1ng',
+  'l\u00e0','t\u00ean','t\u00f4i','\u0111ang','\u0111\u00e3',
+  'sinh','vi\u00ean','gi\u00e1o','b\u00e1c','s\u0129','k\u1ef9','s\u01b0',
+  'c\u00f4ng','ty','t\u1ed5','ch\u1ee9c','h\u1ed9i','ngh\u1ecb',
+  // khong dau
+  'sinh','vien','giao','bac','si','ky','cong','ty',
+  'chuc','hoi','nghi','ten','ho','tuoi','que',
+  'truong','dai','hoc','thanh','pho','khoa',
+]);
+
+
+function stripAccentsJS(s) {
+  return s.normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+}
+
+function capitalizeVietNames(text) {
+  const words = text.split(' ');
+  const result = [...words];
+  let i = 0;
+  while (i < words.length) {
+    const wClean = words[i].replace(/[.,!?;:]/g, '').toLowerCase();
+    const wNorm  = stripAccentsJS(wClean);
+    if (VIET_SURNAMES_JS.has(wClean) || VIET_SURNAMES_JS.has(wNorm)) {
+      // Viet hoa ho
+      result[i] = words[i][0].toUpperCase() + words[i].slice(1);
+      let j = i + 1, count = 0;
+      while (j < words.length && count < 4) {
+        const nxt     = words[j].replace(/[.,!?;:]/g, '').toLowerCase();
+        const nxtNorm = stripAccentsJS(nxt);
+        if (VIET_STOPWORDS_JS.has(nxt) || VIET_STOPWORDS_JS.has(nxtNorm) || nxt.length < 2) break;
+        result[j] = words[j][0].toUpperCase() + words[j].slice(1);
+        j++; count++;
+      }
+      i = j;
+    } else { i++; }
+  }
+  return result.join(' ');
+}
+
+const VN_NUMS=[['không','0'],['một','1'],['hai','2'],['ba','3'],['bốn','4'],['năm','5'],['sáu','6'],['bảy','7'],['tám','8'],['chín','9'],['mười','10']];
+const VN_NUM_LOOKUP=Object.fromEntries(VN_NUMS.map(([w,n])=>[n,w]));
+function normalizeVietNumbers(text){
+  for(const [word,num] of VN_NUMS){
+    try{
+      text=text.replace(new RegExp(word+'\\s+'+num+'(?=\\s|$)','gi'),word);
+      text=text.replace(new RegExp('(?:^|\\s)'+num+'\\s+'+word,'gi'),' '+word);
+    }catch(e){}
+  }
+  text=text.replace(/(\d{1,2})\s+thứ/g,(_,n)=>(VN_NUM_LOOKUP[n]||n)+' thứ');
+  // Buoc 3: phuc hoi ngu canh 'year'
+  text=restoreYearContext(text);
+  return text.trim();
+}
+
+function restoreYearContext(text) {
+  const NAM = 'năm';
+  const SEP = '[,\\s]+';
+
+  // ƯU TIÊN CAO NHẤT: "2000 lẻ 5" / "5 2000 lẻ 5" / "năm 2000 lẻ 5" -> "năm 2005"
+  // Chay truoc het de tranh cac rule gop chu so lam hong pattern
+  text = text.replace(/\b(?:5\s+|năm\s+)?((?:19|20)\d{2})\s+l[eẻ]\s+(\d{1,2})\b/gi,
+    (m, base, tail) => NAM + ' ' + (parseInt(base) + parseInt(tail))
+  );
+
+  // Dang A: "5 2, 0, 2, 6" -> "năm 2026" (4 chu so don le)
+  text = text.replace(
+    new RegExp('\\b5\\s+([12])' + SEP + '([0-9])' + SEP + '([0-9])' + SEP + '([0-9])\\b', 'g'),
+    (m, d1, d2, d3, d4) => {
+      const year = d1+d2+d3+d4;
+      return (year.startsWith('19') || year.startsWith('20')) ? NAM+' '+year : m;
+    }
+  );
+
+  // Dang B: "5 2, 0, 18" -> "năm 2018" (2 chu so don + 1 nhom 2 chu so)
+  text = text.replace(
+    new RegExp('\\b5\\s+([12])' + SEP + '([0-9])' + SEP + '(\\d{2})\\b', 'g'),
+    (m, d1, d2, d3) => {
+      const year = d1+d2+d3;
+      return (year.length===4 && (year.startsWith('19')||year.startsWith('20'))) ? NAM+' '+year : m;
+    }
+  );
+
+  // Dang D: "5 2025" (da la so 4 chu so)
+  text = text.replace(/\b5\s+((?:19|20)\d{2})\b/g, NAM + ' $1');
+
+  // Gop chu so roi khong co '5': "2, 0, 2, 5" -> "2025"
+  text = text.replace(
+    new RegExp('\\b([12])' + SEP + '([0-9])' + SEP + '([0-9])' + SEP + '([0-9])\\b', 'g'),
+    (m, d1, d2, d3, d4) => {
+      const year = d1+d2+d3+d4;
+      return (year.startsWith('19') || year.startsWith('20')) ? year : m;
+    }
+  );
+
+  // "5 + tu chi year" -> "năm + tu do"
+  const yearAfter = ['học','nay','ngoái','ngoai','trước','truoc','tới','toi','qua','sau','nữa','nua'];
+  for (const ya of yearAfter) {
+    try { text = text.replace(new RegExp('\\b5\\s+' + ya + '\\b', 'gi'), NAM + ' ' + ya); }
+    catch(e) {}
+  }
+
+  // "sinh vien 5" -> "sinh vien năm"
+  text = text.replace(/\b(sinh\s+vi[eê]n|h[oọ]c\s+sinh|kh[oó]a)\s+5\b/gi,
+    (_, g) => g + ' ' + NAM);
+  return text;
+}
+
+function preprocessText(text,srcCode){
+  if(srcCode==='vi'){
+    text = restoreYearContext(text);   // ← gop chu so & phan biet nam/5
+    text = normalizeVietNumbers(text);
+    return capitalizeVietNames(text);
+  }
+  return text;
+}
+
+
+// ─── TRANSLATION ─────────────────────────────────────────────
+async function translateText(text) {
+  const srcCode = sourceLangSel.value.split('-')[0];
+  const tgtCode = targetLangSel.value;
+
+  // Tien xu ly: viet hoa ten rieng Viet truoc khi dich
+  text = preprocessText(text, srcCode);
+
+  translatedDisplay.innerHTML = '<span style="color:var(--text2)">⏳ Đang dịch...</span>';
+
+  // 1) Qua local server (server sẽ tự gọi Google → MyMemory → dict)
+  if (serverOnline) {
+    try {
+      const r = await fetch(`${LOCAL_SERVER}/translate`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ text, source: srcCode, target: tgtCode }),
+        signal: AbortSignal.timeout(8000)
+      });
+      console.log('[DEBUG] text sent to server:', JSON.stringify(text));
+      if (r.ok) {
+        const data = await r.json();
+        if (data.translation) {
+          translatedDisplay.textContent = data.translation;
+          showAutoNouns(detectProperNouns(text, data.translation));
+          if (data.engine === 'local-offline') {
+            translatedDisplay.innerHTML += `<br><span style="color:var(--yellow);font-size:0.75rem">⚠️ Đang offline — dịch từ điển cục bộ</span>`;
+          }
+          updateEngine(data.engine || 'local');
+          if (autoTTS) speakText(data.translation, targetLangSel.value);
+          return;
+        }
+      }
+    } catch(e) {
+      console.warn('Server error:', e);
+      serverOnline = false;
+      serverDot.className = 'status-dot warn';
+      serverLabel.textContent = 'Server offline — dùng API trực tiếp';
+    }
+  }
+
+  // 2) Gọi Google Translate trực tiếp từ browser (khi server tắt)
+  try {
+    const url = `https://translate.googleapis.com/translate_a/single?client=gtx&sl=${srcCode}&tl=${tgtCode}&dt=t&q=${encodeURIComponent(text)}`;
+    const r = await fetch(url, { signal: AbortSignal.timeout(8000) });
+    const data = await r.json();
+    const translated = data[0].map(item => item[0]).filter(Boolean).join('');
+    if (translated) {
+      translatedDisplay.textContent = translated;
+      updateEngine('google-direct');
+      showAutoNouns(detectProperNouns(text, translated));
+      if (autoTTS) speakText(translated, targetLangSel.value);
+      return;
+    }
+  } catch(e) { console.warn('Google direct failed:', e); }
+
+  // 3) MyMemory trực tiếp
+  try {
+    const r = await fetch(
+      `https://api.mymemory.translated.net/get?q=${encodeURIComponent(text)}&langpair=${srcCode}|${tgtCode}`,
+      { signal: AbortSignal.timeout(8000) }
+    );
+    const data = await r.json();
+    const translated = data?.responseData?.translatedText;
+    if (translated && translated.toUpperCase() !== 'INVALID LANGUAGE PAIR') {
+      translatedDisplay.textContent = translated;
+      updateEngine('mymemory-direct');
+      if (autoTTS) speakText(translated, targetLangSel.value);
+      return;
+    }
+  } catch(e) { console.warn('MyMemory direct failed:', e); }
+
+  translatedDisplay.innerHTML = '<span style="color:var(--red)">❌ Không dịch được. Kiểm tra kết nối internet.</span>';
+}
+
+// ─── TTS (TEXT-TO-SPEECH) ────────────────────────────────────
+const ttsToggleBtn  = document.getElementById('ttsToggleBtn');
+const speakBtn      = document.getElementById('speakBtn');
+const ttsIndicator  = document.getElementById('ttsIndicator');
+
+ttsToggleBtn.addEventListener('click', () => {
+  autoTTS = !autoTTS;
+  ttsToggleBtn.classList.toggle('active', autoTTS);
+  ttsToggleBtn.textContent = autoTTS ? '🔊 Tự đọc' : '🔇 Tự đọc';
+});
+
+function getTTSLang(code) {
+  // Map target lang code -> BCP-47 for SpeechSynthesis
+  const map = {
+    'en': 'en-US', 'vi': 'vi-VN', 'ja': 'ja-JP',
+    'ko': 'ko-KR', 'zh': 'zh-CN', 'fr': 'fr-FR', 'de': 'de-DE'
+  };
+  return map[code] || code;
+}
+
+function speakText(text, langCode) {
+  if (!window.speechSynthesis) return;
+  window.speechSynthesis.cancel(); // dừng bất kỳ TTS đang chạy
+
+  const utter = new SpeechSynthesisUtterance(text);
+  utter.lang = getTTSLang(langCode);
+  utter.rate = 0.95;
+  utter.pitch = 1;
+  utter.volume = 1;
+
+  utter.onstart = () => {
+    ttsIndicator.classList.add('active');
+    speakBtn.classList.add('speaking');
+    speakBtn.textContent = '⏹ Dừng';
+  };
+  utter.onend = utter.onerror = () => {
+    ttsIndicator.classList.remove('active');
+    speakBtn.classList.remove('speaking');
+    speakBtn.textContent = '🔊 Phát';
+  };
+
+  window.speechSynthesis.speak(utter);
+}
+
+function speakTranslation() {
+  // Nếu đang nói → dừng
+  if (window.speechSynthesis && window.speechSynthesis.speaking) {
+    window.speechSynthesis.cancel();
+    return;
+  }
+  const text = (translatedDisplay.textContent || '').trim();
+  if (!text || text.startsWith('⏳') || text.startsWith('❌') || text.startsWith('Bản dịch')) return;
+  speakText(text, targetLangSel.value);
+}
+
+function updateEngine(engine) {
+  lastEngine = engine;
+  const labels = {
+    'google-translate': '🌐 Google',
+    'google-direct':   '🌐 Google',
+    'mymemory':        '🔄 MyMemory',
+    'mymemory-direct': '🔄 MyMemory',
+    'local-offline':   '📖 Offline',
+  };
+  engineTag.textContent = labels[engine] || engine;
+  if (engine.includes('google'))   engineTag.style.color = 'var(--accent2)';
+  else if (engine.includes('local')) engineTag.style.color = 'var(--yellow)';
+  else engineTag.style.color = 'var(--accent)';
+}
+
+
+// MANUAL INPUT FALLBACK
+const manualInputArea = document.getElementById('manualInputArea');
+const manualInput     = document.getElementById('manualInput');
+const manualSendBtn   = document.getElementById('manualSendBtn');
+
+function showManualFallback() {
+  micBtn.disabled = true;
+  micBtn.textContent = '⛔ Speech API lỗi';
+  micBtn.style.opacity = '0.5';
+  manualInputArea.classList.add('visible');
+}
+
+manualSendBtn.addEventListener('click', () => {
+  const text = manualInput.value.trim();
+  if (!text) return;
+  accumulatedFinal = text;
+  sourceDisplay.textContent = text;
+  translateText(text);
+});
+
+manualInput.addEventListener('keydown', e => {
+  if (e.key === 'Enter' && !e.shiftKey) {
+    e.preventDefault();
+    manualSendBtn.click();
+  }
+});
+function escHtml(str) {
+  return str.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
+
+function copyText(id) {
+  const el = document.getElementById(id);
+  const text = el.textContent || el.innerText;
+  navigator.clipboard.writeText(text).then(() => {
+    const btn = el.previousElementSibling?.querySelector('.copy-btn') ||
+                el.closest('.panel').querySelector('.copy-btn');
+    if (btn) { const orig = btn.textContent; btn.textContent = '✅ Copied!'; setTimeout(()=>btn.textContent=orig, 1500); }
+  });
+}
+</script>
+</body>
+</html>
